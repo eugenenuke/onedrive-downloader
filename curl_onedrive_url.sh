@@ -15,7 +15,11 @@ set -euo pipefail
 usage() {
   cat << EOF
 Usage:
-  $0 <ONE_DRIVE_URL>
+  $0 [-d <OUT_DIR>] [-f <OUT_FILE>] <ONE_DRIVE_URL>
+
+Options:
+  -d <OUT_DIR>: specifies the output directory for the file keeping the original filename (e.g., -d /home/user)
+  -f <OUT_FILE>: sets the local filename (e.g., -f ~/Downloads/file.zip)
 
 Args:
   <ONE_DRIVE_URL>: A OneDrive URL (e.g., https://1drv.ms/u/s!XXX)
@@ -85,16 +89,48 @@ get_drive_id() {
 download_file() {
   local onedrive_encoded_url="$1"
   local token="$2"
+  local dir="$3"
+  local filename="$4"
 
   local target_url=$(curl -s -w %{redirect_url} -o /dev/null "https://api.onedrive.com/v1.0/shares/u!$onedrive_encoded_url/root/content" \
     -H "Authorization: Badger $token")
 
-  local filename=$(curl -X HEAD -si "$target_url" |
-    grep -i "Content-Disposition" |
-    sed 's/.*filename="//; s/".*//')
+  if [[ -z "$filename" ]]; then
+      filename=$(curl -sI "$target_url" |
+        grep -i "Content-Disposition" |
+        sed 's/.*filename="//; s/".*//')
+  fi
 
-  curl --progress-bar -o "$filename" "$target_url"
+  curl --progress-bar -o "$dir/$filename" "$target_url"
 }
+
+out_file=""
+out_dir="."
+
+while getopts "hf:d:" opt; do
+  case ${opt} in
+    f)
+      out_file="${OPTARG}"
+      ;;
+    d)
+      out_dir="${OPTARG}"
+      ;;
+    h)
+      usage
+      exit 1
+      ;;
+    :)
+      echo "Option -${OPTARG} requires an argument."
+      exit 1
+      ;;
+    *)
+      usage
+      exit 1
+      ;;
+  esac
+done
+
+shift $((OPTIND-1))
 
 if [[ $# -ne 1 ]]; then
   usage
@@ -112,4 +148,4 @@ fi
 onedrive_encoded_url=$(encode_url "$onedrive_url")
 badger_token=$(get_badger_token)
 drive_id=$(get_drive_id "$onedrive_encoded_url" "$badger_token")
-download_file "$onedrive_encoded_url" "$badger_token"
+download_file "$onedrive_encoded_url" "$badger_token" "$out_dir" "$out_file" 

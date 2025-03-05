@@ -89,14 +89,9 @@ download_file() {
   local target_url=$(curl -s -w %{redirect_url} -o /dev/null "https://api.onedrive.com/v1.0/shares/u!$onedrive_encoded_url/root/content" \
     -H "Authorization: Badger $token")
 
-  echo $target_url
-  
   local filename=$(curl -X HEAD -si "$target_url" |
     grep -i "Content-Disposition" |
     sed 's/.*filename="//; s/".*//')
-
-  echo $target_url
-  echo $filename
 
   curl --progress-bar -o "$filename" "$target_url"
 }

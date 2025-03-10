@@ -18,17 +18,17 @@ Usage:
   $0 [-d <OUT_DIR>] [-f <OUT_FILE>] <ONE_DRIVE_URL>
 
 Options:
-  -d <OUT_DIR>: specifies the output directory for the file keeping the original filename (e.g., -d /home/user)
+  -d <OUT_DIR>: specifies the output directory for the file(s) keeping the original filename (e.g., -d /home/user)
   -f <OUT_FILE>: sets the local filename (e.g., -f ~/Downloads/file.zip)
 
 Args:
-  <ONE_DRIVE_URL>: A OneDrive URL (e.g., https://1drv.ms/u/s!XXX)
+  <ONE_DRIVE_URL>: A OneDrive URL (e.g., https://1drv.ms/u/s!XXX or https://1drv.ms/f/c/XXX)
 EOF
 }
 
 validate_url() {
   local url="$1"
-  if [[ "$url" =~ ^https://1drv\.ms/u/s!.+$ ]]; then
+  if [[ "$url" =~ ^https://1drv\.ms/((u/s!)|(f/c/)).+$ ]]; then
     return 0
   else
     return 1
@@ -86,6 +86,14 @@ get_drive_id() {
   fi
 }
 
+get_url_type() {
+  local onedrive_encoded_url="$1"
+  local token="$2"
+
+  curl -s "https://api.onedrive.com/v1.0/shares/u!$onedrive_encoded_url/driveItem?\$expand=children" \
+    -H "Authorization: Badger $token" | grep -q '"folder":' && echo "folder" || echo "file"
+}
+
 download_file() {
   local onedrive_encoded_url="$1"
   local token="$2"
@@ -102,6 +110,20 @@ download_file() {
   fi
 
   curl --progress-bar -o "$dir/$filename" "$target_url"
+}
+
+download_folder() {
+  local onedrive_encoded_url="$1"
+  local token="$2"
+  local dir="$3"
+
+  while IFS= read -r url
+  do
+    filename=$(curl -sI "$url" | grep -i "Content-Disposition" |
+        sed 's/.*filename="//; s/".*//')
+    curl --progress-bar -o "$dir/$filename" "$url"
+  done < <(curl -s "https://api.onedrive.com/v1.0/shares/u!$onedrive_encoded_url/driveItem?\$expand=children" \
+    -H "Authorization: Badger $token" | grep -oP '"@content.downloadUrl":"\K[^"]+')
 }
 
 out_file=""
@@ -148,4 +170,12 @@ fi
 onedrive_encoded_url=$(encode_url "$onedrive_url")
 badger_token=$(get_badger_token)
 drive_id=$(get_drive_id "$onedrive_encoded_url" "$badger_token")
-download_file "$onedrive_encoded_url" "$badger_token" "$out_dir" "$out_file" 
+url_type=$(get_url_type "$onedrive_encoded_url" "$badger_token")
+
+if [[ "$url_type" = "file" ]]
+then
+  download_file "$onedrive_encoded_url" "$badger_token" "$out_dir" "$out_file" 
+else
+  echo "The url leads to a folder, downloading the folder's content. -f flag will be ignored"
+  download_folder "$onedrive_encoded_url" "$badger_token" "$out_dir"
+fi

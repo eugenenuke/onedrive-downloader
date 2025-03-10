@@ -17,11 +17,11 @@ Usage:
   ./<curl|wget>_onedrive_url.sh [-d <OUT_DIR>] [-f <OUT_FILE>] <ONE_DRIVE_URL>
 
 Options:
-  -d <OUT_DIR>: specifies the output directory for the file keeping the original filename (e.g., -d /home/user)
+  -d <OUT_DIR>: specifies the output directory for the file(s) keeping the original filename (e.g., -d /home/user)
   -f <OUT_FILE>: sets the local filename (e.g., -f ~/Downloads/file.zip)
 
 Args:
-  <ONE_DRIVE_URL>: A OneDrive URL (e.g., https://1drv.ms/u/s!XXX)
+  <ONE_DRIVE_URL>: A OneDrive URL (e.g., https://1drv.ms/u/s!XXX  or https://1drv.ms/f/c/XXX)
 ```
 
 ### Examples

@@ -21,7 +21,7 @@ Options:
   -f <OUT_FILE>: sets the local filename (e.g., -f ~/Downloads/file.zip)
 
 Args:
-  <ONE_DRIVE_URL>: A OneDrive URL (e.g., https://1drv.ms/u/s!XXX  or https://1drv.ms/f/c/XXX)
+  <ONE_DRIVE_URL>: A OneDrive URL (e.g., https://1drv.ms/u/s!XXX)
 ```
 
 ### Examples

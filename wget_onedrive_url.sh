@@ -22,13 +22,13 @@ Options:
   -f <OUT_FILE>: sets the local filename (e.g., -f ~/Downloads/file.zip)
 
 Args:
-  <ONE_DRIVE_URL>: A OneDrive URL (e.g., https://1drv.ms/u/s!XXX or https://1drv.ms/f/c/XXX)
+  <ONE_DRIVE_URL>: A OneDrive URL (e.g., https://1drv.ms/u/s!XXX)
 EOF
 }
 
 validate_url() {
   local url="$1"
-  if [[ "$url" =~ ^https://1drv\.ms/((u/s!)|(f/c/)).+$ ]]; then
+  if [[ "$url" =~ ^https://1drv\.ms/.+$ ]]; then
     return 0
   else
     return 1

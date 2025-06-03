@@ -120,12 +120,16 @@ download_folder() {
   local onedrive_encoded_url="$1"
   local token="$2"
   local dir="$3"
+  local children="$(wget -qO- "$onedrive_encoded_url" --header "Authorization: Badger $token")"
 
   while IFS= read -r url
   do
     wget -qP "$dir" --show-progress --content-disposition "$url"
-  done < <(wget -qO- "https://api.onedrive.com/v1.0/shares/u!$onedrive_encoded_url/driveItem?\$expand=children" \
-    --header "Authorization: Badger $token" | grep -oP '"@content.downloadUrl":"\K[^"]+')
+  done < <(echo "$children" | grep -oP '"@content.downloadUrl":"\K[^"]+')
+  if echo "$children" | grep -q "@odata.nextLink"; then
+    local skip_url="$(echo "$children" | grep -oP '@odata.nextLink":"\K[^"]+')"
+    download_folder "$skip_url" "$token" "$dir"
+  fi
 }
 
 out_file=""
@@ -178,6 +182,7 @@ if [[ "$url_type" = "file" ]]
 then
   download_file "$onedrive_encoded_url" "$badger_token" "$out_dir" "$out_file" 
 else
-  echo "The url leads to a folder, downloading the folder's content. -f flag will be ignored."
-  download_folder "$onedrive_encoded_url" "$badger_token" "$out_dir"
+  echo "The url leads to a folder, downloading the folder's content. -f flag will be ignored"
+  url="https://api.onedrive.com/v1.0/shares/u!$onedrive_encoded_url/driveItem?\$expand=children"
+  download_folder "$url" "$badger_token" "$out_dir"
 fi

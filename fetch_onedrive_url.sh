@@ -75,8 +75,7 @@ download_folder() {
 
   while read -r url_or_id name
   do
-    if [[ $url_or_id == http* ]]
-    then
+    if [[ $url_or_id == http* ]]; then
       download_file "$url_or_id" "$dir" ""
     else
       echo Entering "$dir/$name" ...
@@ -186,9 +185,9 @@ extract_children() {
   if [[ "$children" != "[]" ]]; then
     while read -r child
       do
-        id=$(extract_id $child)
-        name=$(extract_name $child)
-        url=$(extract_download_link $child)
+        id=$(extract_id "$child")
+        name=$(extract_name "$child")
+        url=$(extract_download_link "$child")
 
         if [[ -n "$url" ]]; then
           echo "$url" "$name"
@@ -276,11 +275,11 @@ onedrive_encoded_url=$(encode_url "$onedrive_url")
 token=$(get_badger_token)
 root_item=$(get_root_item "$onedrive_encoded_url" "$token")
 
-download_url=$(extract_download_link $root_item)
+download_url=$(extract_download_link "$root_item")
 if [[ -n "$download_url" ]]; then
   download_file "$download_url" "$out_dir" "$out_file" 
 else
   echo "The url leads to a folder, downloading the folder's content. -f flag will be ignored"
-  folder_id=$(extract_folder_id $root_item)
+  folder_id=$(extract_folder_id "$root_item")
   download_folder "$(get_folder_url $folder_id)" "$token" "$out_dir"
 fi

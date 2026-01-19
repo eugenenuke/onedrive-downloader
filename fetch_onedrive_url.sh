@@ -171,8 +171,6 @@ extract_next_link() {
 
 extract_children() {
   local children="$1"
-  local key=""
-  local value=""
   local id=""
   local url=""
   local name=""
@@ -180,7 +178,7 @@ extract_children() {
   # echo $children | jq -r '.children[] | (if ."@content.downloadUrl" then ."@content.downloadUrl" else .id end) + " " + .name'
 
   # extract the `children` content
-  children=$(echo "$children" | grep -oP '(?<="children":)\[.*?\]')
+  children=$(echo "$children" | grep -oP '(?<="children":)(\[(?:[^\[\]]|(?1))*\])' || echo "[]")
 
   if [[ "$children" != "[]" ]]; then
     while read -r child
